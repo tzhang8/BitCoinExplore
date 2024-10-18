@@ -1,0 +1,26 @@
+version: '3'
+services:
+  backend:
+    build:
+      context: ./bitcoin-explore-backend
+    container_name: rust_backend
+    ports:
+      - "8080:8080"
+    networks:
+      - my_network
+
+  frontend:
+    build:
+      context: ./bitcoin-metrics-frontend
+    container_name: ts_frontend
+    ports:
+      - "3000:3000"
+    networks:
+      - my_network
+    depends_on:
+      - backend
+
+networks:
+  my_network:
+    driver: bridge
+
