@@ -30,7 +30,7 @@ jobs:
       # Step 4: Build Docker image for frontend
       - name: Build Docker image for frontend
         run: |
-          docker build -t frontend ./frontend
+          docker build -t frontend ./bitcoin-metrics-frontend
 
       # Step 5: Tag Docker image for frontend
       - name: Tag Docker image for frontend
@@ -45,7 +45,7 @@ jobs:
       # Step 7: Build Docker image for backend
       - name: Build Docker image for backend
         run: |
-          docker build -t backend ./backend
+          docker build -t backend ./bitcoin-explore-backend
 
       # Step 8: Tag Docker image for backend
       - name: Tag Docker image for backend
