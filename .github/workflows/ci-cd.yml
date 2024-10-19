@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main  # Trigger the workflow when pushing to the main branch
+      - main
 
 jobs:
   build-and-push:
@@ -27,12 +27,12 @@ jobs:
         run: |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-      # Step 4: Build the Docker image for frontend
+      # Step 4: Build Docker image for frontend
       - name: Build Docker image for frontend
         run: |
           docker build -t frontend ./frontend
 
-      # Step 5: Tag the Docker image for frontend
+      # Step 5: Tag Docker image for frontend
       - name: Tag Docker image for frontend
         run: |
           docker tag frontend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend:latest
@@ -42,12 +42,12 @@ jobs:
         run: |
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend:latest
 
-      # Step 7: Build the Docker image for backend
+      # Step 7: Build Docker image for backend
       - name: Build Docker image for backend
         run: |
           docker build -t backend ./backend
 
-      # Step 8: Tag the Docker image for backend
+      # Step 8: Tag Docker image for backend
       - name: Tag Docker image for backend
         run: |
           docker tag backend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend:latest
@@ -56,22 +56,3 @@ jobs:
       - name: Push Docker image for backend to ECR
         run: |
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend:latest
-
-  deploy:
-    needs: build-and-push  # Run this job after the build-and-push job is complete
-    runs-on: ubuntu-latest
-
-    steps:
-      # Step 10: Configure AWS credentials
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      # Step 11: Update ECS Service to use the new image
-      - name: Update ECS Service
-        run: |
-          aws ecs update-service --cluster ${{ secrets.ECS_CLUSTER }} --service ${{ secrets.ECS_SERVICE }} --force-new-deployment
-
