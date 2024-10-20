@@ -1,52 +1,49 @@
 name: CI/CD Pipeline
 
 on:
-  push:
-    branches:
-      - main
+push:
+branches:
+- main
 
 jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
+build-and-push:
+runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+steps:
+- name: Checkout code
+uses: actions/checkout@v2
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
+- name: Configure AWS credentials
+uses: aws-actions/configure-aws-credentials@v1
+with:
+aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Log in to Amazon ECR
-        run: |
-          aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 443370707547.dkr.ecr.us-east-2.amazonaws.com
+- name: Log in to Amazon ECR
+run: |
+         aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-      - name: Build and push frontend Docker image
-        run: |
-          docker build -t frontend ./bitcoin-metrics-frontend
-          docker tag frontend:latest 443370707547.dkr.ecr.us-east-2.amazonaws.com/frontend:latest
-          docker push 443370707547.dkr.ecr.us-east-2.amazonaws.com/frontend:latest
+- name: Build Docker image for frontend
+run: |
+         docker build -t frontend ./bitcoin-metrics-frontend
 
-      - name: Build and push backend Docker image
-        run: |
-          docker build -t backend ./bitcoin-explore-backend
-          docker tag backend:latest 443370707547.dkr.ecr.us-east-2.amazonaws.com/backend:latest
-          docker push 443370707547.dkr.ecr.us-east-2.amazonaws.com/backend:latest
+- name: Tag Docker image for frontend
+run: |
+         docker tag frontend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend:latest
 
-  deploy-to-ecs:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
+- name: Push Docker image for frontend to ECR
+run: |
+         docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend:latest
 
-      - name: Update ECS Service to use the new Docker image
-        run: |
-          aws ecs update-service --cluster DevCluster --service bitcoinExplore --force-new-deployment
+- name: Build Docker image for backend
+run: |
+         docker build -t backend ./bitcoin-explore-backend
+
+- name: Tag Docker image for backend
+run: |
+         docker tag backend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend:latest
+
+- name: Push Docker image for backend to ECR
+run: |
+         docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend:latest
